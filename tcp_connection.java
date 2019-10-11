@@ -13,10 +13,22 @@ class tcp_connection
     this.server_port = server_port;
     this.client_port = client_port;
     this.t_open = t_open;
+    this.t_close = -1.0;
   }
 
   void put_close_time(double t)
   {
     this.t_close = t;
   }
+
+  void print()
+	{
+		System.out.println("server_ip: 			" + server_ip);
+		System.out.println("client_ip: 			" + client_ip);
+		System.out.println("server_port: 		" + server_port);
+		System.out.println("client_port: 	" + client_port);
+		System.out.println("t_open:		" + t_open);
+		System.out.println("t_close: 		" + t_close);
+    System.out.println("------------------------------");
+	}
 }

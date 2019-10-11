@@ -30,6 +30,7 @@ public class data_processing
 			while( (row = csv_reader.readLine()) != null ) //&& counter <= cutoff)
 			{
 //				counter++;
+
 				String[] data = row.split(",");
 				String info = "";
 				// combining the info
@@ -46,8 +47,12 @@ public class data_processing
 				// storing the packet
 				all_packets.add(p);
 			}
+			all_packets.extract_tcp_packets();
+			// for(int i=0; i<all_packets.tcp_packets.size(); i++)
+			// {
+			// 	all_packets.tcp_packets.get(i).print();
+			// }
 			////////////////////////////////////////	////////////////////////////////////////
-
 		}
 		catch(Exception e)
 		{

@@ -30,5 +30,32 @@ class packet
 		System.out.println("protocol:		" + protocol);
 		System.out.println("length: 		" + length);
 		System.out.println("info: 			" + info);
+		System.out.println("------------------------------");
 	}
+
+	String get_source_ip()
+	{
+		return source_ip;
+	}
+
+	String get_dest_ip()
+	{
+		return destination_ip;
+	}
+
+	double get_time()
+	{
+		return time;
+	}
+
+	String get_info()
+	{
+		return info;
+	}
+
+	int get_no()
+	{
+		return no;
+	}
+
 }
