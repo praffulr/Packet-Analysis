@@ -6,12 +6,19 @@ public class packet_traces
 	List<packet> all_packets;
 	List<tcp_connection> tcp_packets;
 	List<String> unique_client_ips, unique_server_ips;
+	List<Double> client_to_server_packets_time, server_to_client_packets_time;
+	List<Integer> client_to_server_packet_lengths, server_to_client_packet_lengths;
+
 	packet_traces()
 	{
 		all_packets = new ArrayList<packet>();
 		tcp_packets = new ArrayList<tcp_connection>();
 		unique_client_ips = new ArrayList<String>();
 		unique_server_ips = new ArrayList<String>();
+		client_to_server_packets_time = new ArrayList<Double>();
+		server_to_client_packets_time = new ArrayList<Double>();
+		client_to_server_packet_lengths = new ArrayList<Integer>();
+		server_to_client_packet_lengths = new ArrayList<Integer>();
 	}
 
 	// extract syn packet for 3 way hand shaked packets
@@ -31,7 +38,8 @@ public class packet_traces
 					if(parts_info1[j].equals("") || parts_info1[j] == null)  continue;
 					else parts_info.add(parts_info1[j]);
 				}
-				if(parts_info.get(3).equals("[SYN]"))
+				if(	parts_info.get(3).equals("[SYN]")|| 
+					(parts_info.get(3).equals("[SYN,") && !parts_info.get(4).equals("ACK]")))
 				{
 					String s_ip = p.destination_ip, c_ip = p.source_ip;
 					int s_port, c_port;
@@ -58,11 +66,12 @@ public class packet_traces
 								if(parts_info_temp.get(3).equals("[ACK]"))
 								{
 									//add to tcp_packets
-									tcp_connection new_connection = new tcp_connection(s_ip, c_ip, s_port, c_port, p.time);
+									tcp_connection new_connection = new tcp_connection(s_ip, c_ip, s_port, c_port, p.time, i+1);
 									tcp_packets.add(new_connection);
 									break;
 								}
-								else if(parts_info_temp.get(3).equals("[SYN]"))
+								else if(parts_info_temp.get(3).equals("[SYN]") || 
+									(parts_info_temp.get(3).equals("[SYN,") && !parts_info_temp.get(4).equals("ACK]")))
 								{
 									break;
 								}
@@ -133,11 +142,15 @@ public class packet_traces
 			else if(tcp.server_ip.equals(server_ip) && tcp.client_ip.equals(client_ip) && tcp.server_port == server_port && tcp.client_port == client_port)
 			{
 				tcp.t_close = time;
+				tcp.end_no = index+1;
 				//c++;
 				return;
 			}
 		}
 		//System.out.println(time + " "+(index+1)+ " Some mistake 3");
+		// modifing unique client and server ips: FIN packets exist but SYN packets not captured	
+		if(! unique_client_ips.contains(client_ip)) 		unique_client_ips.add(client_ip);		// ###
+		if(! unique_server_ips.contains(server_ip))		unique_server_ips.add(server_ip);		// ###
 	}
 
 	// extracting unique server ips and client ips 					// ###
@@ -154,7 +167,7 @@ public class packet_traces
 			boolean client_is_unique = true, server_is_unique = true;
 			//// searching for ips in existing list
 			// for client ips
-			if(! unique_client_ips.contains(client_ip)) 	unique_client_ips.add(client_ip);
+			if(! unique_client_ips.contains(client_ip)) 		unique_client_ips.add(client_ip);
 			if(! unique_server_ips.contains(server_ip))		unique_server_ips.add(server_ip);
 		}
 	}
@@ -198,7 +211,114 @@ public class packet_traces
 			System.out.println(e);
 		}
 	}
+	// updating data transfered over each tcp flow
+	void update_cdf_infos()
+	{
+		// considering each tcp flow 
+		int tcp_packets_size = tcp_packets.size(), all_packets_size = all_packets.size();
+		for(int i=0; i<tcp_packets_size; i++)
+		{
+			tcp_connection tcp_packet = tcp_packets.get(i);
+			// check if it is a complete tcp flow
+			if(tcp_packet.check_complete_flow())
+			{
+				// finding packets belonging to the same tcp_packet
+				// searching in the original database 
+				for(int j=tcp_packet.start_no-1; j<all_packets_size; j++)
+				{
+					// checking time constraints
+					packet p = all_packets.get(j);
+					if(p.time >= tcp_packet.t_open && p.time <= tcp_packet.t_close)
+					{
+						// check for tcp protocol
+						if(p.check_protocol("TCP"))
+						{
+							// check if packet belongs to same tcp flow or not
+							// checking for client to server packet
+							// syn packet is client to server packet
+							if(	p.client_to_server && 
+								p.source_ip.equals(tcp_packet.client_ip) &&
+							 	p.destination_ip.equals(tcp_packet.server_ip) && 
+								p.source_port == tcp_packet.client_port && 
+								p.destination_port == tcp_packet.server_port)
+							{
+								// incoming packet: client to server
+								// modify: incoming time, bytes transfered, packet lengths
+								client_to_server_packets_time.add(p.time);
+								tcp_packets.get(i).bytes_client_to_server += p.length;
+								client_to_server_packet_lengths.add(p.length);
+							}
+							// checking for server to client packet
+							else if(!p.client_to_server &&
+								p.source_ip.equals(tcp_packet.server_ip) &&
+								p.destination_ip.equals(tcp_packet.client_ip) && 
+								p.source_port == tcp_packet.server_port &&
+								p.destination_port == tcp_packet.client_port)
+							{
+								// outgoing packet: server to client
+								// modify: bytes transfered, packet length
+								server_to_client_packets_time.add(p.time);
+								tcp_packets.get(i).bytes_server_to_client += p.length;
+								server_to_client_packet_lengths.add(p.length);
+							}
+						}
+					}
+					else	break;	
+				}
+			}
+		}
+	}
+	// write interarrival time into a file to calculate cdf
+	void cdf_of_interarrival_time()
+	{
+		// opening a file
+		try
+		{
+			// creating a file: historgram_tcp_connections.txt
+			FileWriter fw = new FileWriter("interarrivals.txt");
+			// first need to sort client_to_server_packets_time
+			Collections.sort(client_to_server_packets_time);
+			double prev_time = client_to_server_packets_time.get(0);
+			int cutoff = client_to_server_packets_time.size();
+			for(int i=1; i<cutoff; i++)
+			{
+				fw.write(Double.toString(client_to_server_packets_time.get(i) - prev_time) + "\n");
+				prev_time = client_to_server_packets_time.get(i);
+			}
 
+			fw.flush();
+			fw.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println(e);
+		}
+	}
+	// writing packet lengths to 2 diff files for incoming and outgoing packets
+	void cdf_of_packet_lengths()
+	{
+		try
+		{
+			// for client to server packets
+			// creating a file: historgram_tcp_connections.txt
+			FileWriter fw = new FileWriter("client_to_server_packet_lengths.txt");
+			int cutoff = client_to_server_packet_lengths.size();
+			for(int i=0; i<cutoff; i++)	fw.write(Integer.toString(client_to_server_packet_lengths.get(i)) + "\n");
+			fw.flush();
+			fw.close();
+			// for server to client packets
+			// creating a file: historgram_tcp_connections.txt
+			fw = new FileWriter("server_to_client_packet_lengths.txt");
+			cutoff = server_to_client_packet_lengths.size();
+			for(int i=0; i<cutoff; i++)	fw.write(Integer.toString(server_to_client_packet_lengths.get(i)) + "\n");
+			fw.flush();
+			fw.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println(e);
+		}
+	}
 	void add(packet p)
 	{
 		all_packets.add(p);

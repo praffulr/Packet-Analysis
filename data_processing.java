@@ -55,18 +55,14 @@ public class data_processing
 				//if(all_packets.all_packets.size() > 6000) break;
 			}
 			all_packets.extract_tcp_packets();
-//Checking
-			//System.out.println("as: "+ all_packets.c+" "+all_packets.c1+" "+all_packets.c2+" "+all_packets.c3 );
-
-
-			// for(int i=0; i<all_packets.tcp_packets.size(); i++)
-			// {
-			// 	if(all_packets.tcp_packets.get(i).t_close < 0) all_packets.tcp_packets.get(i).print();
-			// }
+			all_packets.put_end_times();
 			all_packets.extract_unique_server_client_ips();
 			all_packets.histogram_tcp_connections();
+			all_packets.cdf_of_durations();
+			all_packets.update_cdf_infos();
+			all_packets.cdf_of_interarrival_time();
+			all_packets.cdf_of_packet_lengths();
 			all_packets.print();
-			////////////////////////////////////////	////////////////////////////////////////
 		}
 		catch(Exception e)
 		{
