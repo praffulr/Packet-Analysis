@@ -5,11 +5,13 @@ public class packet_traces
 {
 	List<packet> all_packets;
 	List<tcp_connection> tcp_packets;
-
+	List<String> unique_client_ips, unique_server_ips;
 	packet_traces()
 	{
 		all_packets = new ArrayList<packet>();
 		tcp_packets = new ArrayList<tcp_connection>();
+		unique_client_ips = new ArrayList<String>();
+		unique_server_ips = new ArrayList<String>();
 	}
 
 	// extract syn packet for 3 way hand shaked packets
@@ -136,6 +138,44 @@ public class packet_traces
 			}
 		}
 		//System.out.println(time + " "+(index+1)+ " Some mistake 3");
+	}
+
+	// extracting unique server ips and client ips 					// ###
+	void extract_unique_server_client_ips()
+	{
+		int tcp_packets_size = tcp_packets.size();
+		// traversing through all unique tcp packets
+		for(int i=0; i< tcp_packets_size; i++)
+		{
+			// getting tcp packet header content
+			tcp_connection tcp_packet = tcp_packets.get(i);
+			String server_ip = tcp_packet.server_ip, client_ip = tcp_packet.client_ip;
+			int unique_client_ips_size = unique_client_ips.size(), unique_server_ips_size = unique_server_ips.size();
+			boolean client_is_unique = true, server_is_unique = true;
+			//// searching for ips in existing list
+			// for client ips
+			if(! unique_client_ips.contains(client_ip)) 	unique_client_ips.add(client_ip);
+			if(! unique_server_ips.contains(server_ip))		unique_server_ips.add(server_ip);
+		}
+	}
+	// get histogram of # of connections opened to any server 		// ###
+	void histogram_tcp_connections()
+	{
+		try
+		{
+			// creating a file: historgram_tcp_connections.txt
+			FileWriter fw = new FileWriter("histogram_tcp_connections.txt");
+			// writing tcp connection opening time
+			int tcp_packets_size = tcp_packets.size();
+			for(int i=0; i<tcp_packets_size; i++)
+				fw.write(Double.toString(tcp_packets.get(i).t_open/3600) + "\n");
+			fw.flush();
+			fw.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println(e);
+		}
 	}
 
 	// print duration of each tcp flow into text file to draw cdf
