@@ -24,19 +24,25 @@ public class data_processing
 			// creating buffered reader and reading the file
 			BufferedReader csv_reader = new BufferedReader(new FileReader(args[0]));
 			String row = null;
+
 			// reading header line
 			csv_reader.readLine();
-//			int counter=1, cutoff=8;
-			while( (row = csv_reader.readLine()) != null ) //&& counter <= cutoff)
+			while( (row = csv_reader.readLine()) != null )
 			{
-//				counter++;
-
 				String[] data = row.split(",");
 				String info = "";
+
 				// combining the info
-				if(data.length > 7)	for(int i=6; i<data.length; i++) 	info += String.join(",", data[i]);
+				if(data.length > 7)
+				{
+					info = data[6];
+					for(int i=7; i<data.length; i++)
+						info = info +","+data[i];
+				}
 				else	info = data[6];
         info.trim();
+
+
 				packet p = new packet( 	Integer.parseInt(data[0].substring(1, data[0].length()-1)),
 							Double.parseDouble(data[1].substring(1, data[1].length()-1)),
 							Integer.parseInt(data[5].substring(1, data[5].length()-1)),
@@ -46,12 +52,20 @@ public class data_processing
 							info.substring(1, info.length()-1));
 				// storing the packet
 				all_packets.add(p);
+				//if(all_packets.all_packets.size() > 6000) break;
 			}
 			all_packets.extract_tcp_packets();
+
+//Checking
+			//System.out.println("as: "+ all_packets.c+" "+all_packets.c1+" "+all_packets.c2+" "+all_packets.c3 );
+
+
 			// for(int i=0; i<all_packets.tcp_packets.size(); i++)
 			// {
-			// 	all_packets.tcp_packets.get(i).print();
+			// 	if(all_packets.tcp_packets.get(i).t_close < 0) all_packets.tcp_packets.get(i).print();
 			// }
+
+
 			////////////////////////////////////////	////////////////////////////////////////
 		}
 		catch(Exception e)

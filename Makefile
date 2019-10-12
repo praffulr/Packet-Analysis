@@ -1,9 +1,15 @@
 go1:
-	javac data_processing.java
-	java data_processing.java lbnl.anon-ftp.03-01-11.csv
+	export CLASSPATH=.:/	
+	javac *.java
+	java data_processing lbnl.anon-ftp.03-01-11.csv
+	rm *.class
 go2:
-	javac data_processing.java
-	java data_processing.java lbnl.anon-ftp.03-01-14.csv
+	export CLASSPATH=.:/	
+	javac *.java
+	java data_processing lbnl.anon-ftp.03-01-14.csv
+	rm *.class
 go3:
-	javac data_processing.java
-	java data_processing.java lbnl.anon-ftp.03-01-18.csv
+	export CLASSPATH=.:/	
+	javac *.java
+	java data_processing lbnl.anon-ftp.03-01-18.csv
+	rm *.class

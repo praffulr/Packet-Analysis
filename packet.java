@@ -33,29 +33,29 @@ class packet
 		System.out.println("------------------------------");
 	}
 
-	String get_source_ip()
-	{
-		return source_ip;
-	}
-
-	String get_dest_ip()
-	{
-		return destination_ip;
-	}
-
-	double get_time()
-	{
-		return time;
-	}
-
-	String get_info()
-	{
-		return info;
-	}
-
-	int get_no()
-	{
-		return no;
-	}
+	// String get_source_ip()
+	// {
+	// 	return source_ip;
+	// }
+	//
+	// String get_dest_ip()
+	// {
+	// 	return destination_ip;
+	// }
+	//
+	// double get_time()
+	// {
+	// 	return time;
+	// }
+	//
+	// String get_info()
+	// {
+	// 	return info;
+	// }
+	//
+	// int get_no()
+	// {
+	// 	return no;
+	// }
 
 }
