@@ -205,6 +205,11 @@ public class packet_traces
 	}
 	void print()
 	{
+		int unique_server_ips_size = unique_server_ips.size(), unique_client_ips_size = unique_client_ips.size(),
+		    tcp_packets_size = tcp_packets.size();
+		System.out.println("server ips: " + unique_server_ips_size);
+		System.out.println("client ips: " + unique_client_ips_size);
 		System.out.println("number of packets: " + all_packets.size());
+		System.out.println("number of unique tcp flows: " + tcp_packets_size);
 	}
 }
