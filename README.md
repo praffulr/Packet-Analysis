@@ -1,1 +1,1 @@
-# networks_A3
+In this project, we analyzed the given packet traces for three days of FTP connections on port 21 to a set of FTP servers. The traces were captured by sniffing the network to which the servers are connected, and therefore contain both incoming and outgoing packets to/from the servers.
